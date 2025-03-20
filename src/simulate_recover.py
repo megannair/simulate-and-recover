@@ -32,10 +32,10 @@ def simulate_observed_data(R_pred, M_pred, V_pred, N):
     return R_obs, M_obs, V_obs
 
 # Run the simulation
-N_values = [10, 40, 4000]
+N_values = [10, 40, 4000]  # Ensure we run for all N values
 results = []
 
-for N in N_values:
+for N in N_values:  # Loop over all N values correctly
     for _ in range(1000):
         # Generate random parameters
         a_true = np.random.uniform(0.5, 2)
@@ -51,16 +51,32 @@ for N in N_values:
         # Recover parameters
         a_est, v_est, t_est = inverse_equations(R_obs, M_obs, V_obs)
 
-        # Store results
-        results.append([N, a_true, v_true, t_true, a_est, v_est, t_est])
+        if None in [a_est, v_est, t_est]:  # Skip invalid estimates
+            continue
+
+        # Compute bias (difference between true and estimated)
+        bias_a = a_est - a_true
+        bias_v = v_est - v_true
+        bias_t = t_est - t_true
+
+        # Compute squared error
+        se_a = bias_a ** 2
+        se_v = bias_v ** 2
+        se_t = bias_t ** 2
+
+        # Store results including bias and squared error
+        results.append([N, a_true, v_true, t_true, a_est, v_est, t_est, bias_a, bias_v, bias_t, se_a, se_v, se_t])
 
 # Ensure the results directory exists
 if not os.path.exists("results"):
     os.makedirs("results")
 
 # Save results
-df = pd.DataFrame(results, columns=["N", "a_true", "v_true", "t_true", "a_est", "v_est", "t_est"])
+df = pd.DataFrame(results, columns=["N", "a_true", "v_true", "t_true", 
+                                    "a_est", "v_est", "t_est", 
+                                    "bias_a", "bias_v", "bias_t",
+                                    "se_a", "se_v", "se_t"])
+
 df.to_csv("results/sim_results.csv", index=False)
 
 print("Simulation complete. Results saved in results/sim_results.csv.")
-
